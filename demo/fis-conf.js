@@ -1,5 +1,5 @@
 fis.config.merge({
-	namespace : 'demo',
+	namespace : 'index',
     pack : {
         'static/pkg/aio.css' : 'widget/**.css',
         'static/pkg/aio.js' : 'widget/nav/**.js'

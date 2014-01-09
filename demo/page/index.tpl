@@ -9,9 +9,8 @@
     	{%require name="index:static/mod.js"%}
     	{%require name="index:static/lazyload.js"%}
 		{%require name="index:static/BigPipe-websql.js"%}
-		{%require name="index:static/jquery.js"%}
 	{%/head%}
-	{%body%}	
+	{%body%}
 		{%widget name="index:widget/a/a.tpl"%}
 		{%widget name="index:widget/b/b.tpl" mode="quickling" pagelet_id="b_wrapper"%}
 		{%widget name="index:widget/c/c.tpl" mode="quickling" pagelet_id="c_wrapper"%}
@@ -20,14 +19,12 @@
 			<button type="button" id="asyncLoad">Async Load</button>
 		</div>
 		{%script%}
-			$("#asyncLoad").click(function(e){
-				var elms = document.getElementsByClassName('g_fis_bigrender');
-				console.log(elms);
-				for (var i = 0, len = elms.length; i < len; i++) {
-					window['eval'] && window['eval'](elms[i].innerHTML);
-				}
-				e.preventDefault();
-			});
+            window.onload = function() {
+                var elms = document.getElementsByClassName('g_fis_bigrender');
+                for (var i = 0, len = elms.length; i < len; i++) {
+                    window['eval'] && window['eval'](elms[i].innerHTML);
+                }
+            };
 		{%/script%}
 	{%/body%}
 {%/html%}
