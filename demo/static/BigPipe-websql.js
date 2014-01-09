@@ -15,7 +15,7 @@ var BigPipe = function() {
         },
         LOADED = 1,
         cacheMaxTime = 5 * 60 * 1000,
-        WEBSQL_DB_NAME = location.hostname;
+        WEBSQL_DB_NAME = location.hostname,
         WEBSQL_TATBLE_NAME = 'fis_bigpipe_cache';
 
     function parseJSON (json) {
@@ -250,39 +250,46 @@ var BigPipe = function() {
     }
 
     var Websql = {
-        getItem : function(id, cb){
-            var conn = openDatabase(WEBSQL_DB_NAME, '1.0', "", 5 * 1024 * 1024);
-            conn.transaction(function(tx){
-               tx.executeSql('SELECT * FROM ' + WEBSQL_TATBLE_NAME + ' WHERE id=?', [id],
-                function(tx, result){
-                    if(result.rows.length > 0){
-                      cb(null, result.rows.item(0).value);
-                    }else{
-                      cb(null, null);
-                    }
-                },  
-                function(tx, err){
-                    tx.executeSql('CREATE TABLE IF NOT EXISTS ' + WEBSQL_TATBLE_NAME +'(id TEXT NOT NULL PRIMARY KEY, value TEXT)', [], 
-                        function(tx, result){
-                            cb(null);
-                        },
-                        function(tx, err){
-                            cb(err);
-                        });
-                });
-            });
+        getConnection : function(){
+            try{
+                var conn = window.openDatabase(WEBSQL_DB_NAME, '1.0', "", 5 * 1024 * 1024);
+                return conn ? conn : null;
+            }catch(e){
+                return null;
+            }
         },
-        setItem : function(id, content, cb){
-            var conn = openDatabase(WEBSQL_DB_NAME, '1.0', "", 5 * 1024 * 1024);
+        getItem : function(conn, id, cb){
+            conn.transaction(function(tx){
+                tx.executeSql('SELECT * FROM ' + WEBSQL_TATBLE_NAME + ' WHERE id=?', [id],
+                    function(tx, result){
+                        if(result.rows.length > 0){
+                            cb(null, result.rows.item(0).value);
+                        }else{
+                            cb(null, null);
+                        }
+                    },
+                    function(tx, err){
+                        tx.executeSql('CREATE TABLE IF NOT EXISTS ' + WEBSQL_TATBLE_NAME +'(id TEXT NOT NULL PRIMARY KEY, value TEXT)', [],
+                            function(tx, result){
+                                cb(null);
+                            },
+                            function(tx, err){
+                                cb(err);
+                            });
+                    });
+            });
+
+        },
+        setItem : function(conn, id, content, cb){
             conn.transaction(function(tx) {
-               tx.executeSql('INSERT OR REPLACE INTO ' + WEBSQL_TATBLE_NAME + '(id, value) VALUES (?, ?)', [id, content],
-                  function(result){
-                      cb(null, result);
-                  },
-                  function(tx, err){
-                      cb(err);
-                  }
-               );
+                tx.executeSql('INSERT OR REPLACE INTO ' + WEBSQL_TATBLE_NAME + '(id, value) VALUES (?, ?)', [id, content],
+                    function(result){
+                        cb(null, result);
+                    },
+                    function(tx, err){
+                        cb(err);
+                    }
+                );
             });
         }
     };
@@ -310,11 +317,12 @@ var BigPipe = function() {
         var url = location.href.split('#')[0] + '?' + args.join('&') + '&force_mode=1&fis_widget=true' +param;
         
         var store = window && window.openDatabase;
+        var conn = Websql.getConnection();
         var h_url = url;
         var lc_id = location.hostname + location.pathname + '?' + args.join('&');
 
-        if (store) {
-            Websql.getItem(lc_id, function(err, cache){
+        if (store && conn) {
+            Websql.getItem(conn, lc_id, function(err, cache){
                 if(cache){
                     var cache_obj = parseJSON(cache);
                     h_url = url + '&fis_cache_hash=' + cache_obj.hash;
@@ -327,7 +335,7 @@ var BigPipe = function() {
                     if (data.cache !== '0' && cache) {
                         process_render(cache_obj);
                     } else {
-                        Websql.setItem(lc_id, res, function(err, result){
+                        Websql.setItem(conn, lc_id, res, function(err, result){
                            process_render(data);
                         });
                     }
