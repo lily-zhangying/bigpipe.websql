@@ -12,9 +12,11 @@
 	{%/head%}
 	{%body%}
 		{%widget name="index:widget/a/a.tpl"%}
-		{%widget name="index:widget/b/b.tpl" mode="quickling" pagelet_id="b_wrapper"%}
-		{%widget name="index:widget/c/c.tpl" mode="quickling" pagelet_id="c_wrapper"%}
-		{%widget name="index:widget/d/d.tpl" mode="quickling" pagelet_id="d_wrapper"%}
+		{%widget name="index:widget/b/b.tpl" mode="quickling" pagelet_id="b_wrapper" group="a"%}
+		<div>dddd</div>
+		{%widget name="index:widget/c/c.tpl" mode="quickling" pagelet_id="c_wrapper"  group="a"%}
+		<div>dddd</div>
+		{%widget name="index:widget/d/d.tpl" mode="quickling" pagelet_id="d_wrapper"  group="a"%}
 		<div>
 			<button type="button" id="asyncLoad">Async Load</button>
 		</div>
