@@ -83,7 +83,8 @@ var BigPipe = function() {
     }
 
 
-    function render(options) {
+    function render(options, arr_pagelets) {
+        pagelets = !arr_pagelets ? pagelets : arr_pagelets;
         var i, n = pagelets.length;
         var pageletsMap = {};
         var rendered = {};
@@ -354,9 +355,8 @@ var BigPipe = function() {
         function process_render(data){
             resource = data;
             pageUrl = url;
-            pagelets = data.pagelets;
             process(data.resource_map, function() {
-                render();
+                render({}, data.pagelets);
             });
         };
     }
