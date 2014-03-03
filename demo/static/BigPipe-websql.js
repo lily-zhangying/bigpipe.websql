@@ -18,6 +18,53 @@ var BigPipe = function() {
         WEBSQL_DB_NAME = location.hostname,
         WEBSQL_TATBLE_NAME = 'fis_bigpipe_cache';
 
+    var Websql = {
+        getConnection : function(){
+            try{
+                var conn = window.openDatabase(WEBSQL_DB_NAME, '1.0', "", 5 * 1024 * 1024);
+                return conn ? conn : null;
+            }catch(e){
+                return null;
+            }
+        },
+        getItem : function(conn, id, cb){
+            conn.transaction(function(tx){
+                tx.executeSql('SELECT * FROM ' + WEBSQL_TATBLE_NAME + ' WHERE id=?', [id],
+                    function(tx, result){
+                        if(result.rows.length > 0){
+                            cb(null, result.rows.item(0).value);
+                        }else{
+                            cb(null, null);
+                        }
+                    },
+                    function(tx, err){
+                        tx.executeSql('CREATE TABLE IF NOT EXISTS ' + WEBSQL_TATBLE_NAME +'(id TEXT NOT NULL PRIMARY KEY, value TEXT)', [],
+                            function(tx, result){
+                                cb(null);
+                            },
+                            function(tx, err){
+                                cb(err);
+                            });
+                    });
+            });
+
+        },
+        setItem : function(conn, id, content, cb){
+            conn.transaction(function(tx) {
+                tx.executeSql('INSERT OR REPLACE INTO ' + WEBSQL_TATBLE_NAME + '(id, value) VALUES (?, ?)', [id, content],
+                    function(result){
+                        cb(null, result);
+                    },
+                    function(tx, err){
+                        cb(err);
+                    }
+                );
+            });
+        }
+    };
+
+    var conn = Websql.getConnection();
+
     function parseJSON (json) {
         return window.JSON? JSON.parse(json) : eval('(' + json + ')');
     }
@@ -250,51 +297,7 @@ var BigPipe = function() {
         fetch(url, id, options, callback);
     }
 
-    var Websql = {
-        getConnection : function(){
-            try{
-                var conn = window.openDatabase(WEBSQL_DB_NAME, '1.0', "", 5 * 1024 * 1024);
-                return conn ? conn : null;
-            }catch(e){
-                return null;
-            }
-        },
-        getItem : function(conn, id, cb){
-            conn.transaction(function(tx){
-                tx.executeSql('SELECT * FROM ' + WEBSQL_TATBLE_NAME + ' WHERE id=?', [id],
-                    function(tx, result){
-                        if(result.rows.length > 0){
-                            cb(null, result.rows.item(0).value);
-                        }else{
-                            cb(null, null);
-                        }
-                    },
-                    function(tx, err){
-                        tx.executeSql('CREATE TABLE IF NOT EXISTS ' + WEBSQL_TATBLE_NAME +'(id TEXT NOT NULL PRIMARY KEY, value TEXT)', [],
-                            function(tx, result){
-                                cb(null);
-                            },
-                            function(tx, err){
-                                cb(err);
-                            });
-                    });
-            });
-
-        },
-        setItem : function(conn, id, content, cb){
-            conn.transaction(function(tx) {
-                tx.executeSql('INSERT OR REPLACE INTO ' + WEBSQL_TATBLE_NAME + '(id, value) VALUES (?, ?)', [id, content],
-                    function(result){
-                        cb(null, result);
-                    },
-                    function(tx, err){
-                        cb(err);
-                    }
-                );
-            });
-        }
-    };
-
+    
     /**
      * 异步加载pagelets
      */
@@ -318,7 +321,7 @@ var BigPipe = function() {
         var url = location.href.split('#')[0] + '?' + args.join('&') + '&force_mode=1&fis_widget=true' +param;
         
         var store = window && window.openDatabase;
-        var conn = Websql.getConnection();
+
         var h_url = url;
         var lc_id = location.hostname + location.pathname + '?' + args.join('&');
 
